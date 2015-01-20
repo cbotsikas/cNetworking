@@ -11,6 +11,7 @@
 ######################################################################################
 function Get-TargetResource
 {
+    [OutputType([hashtable])]
 	param
 	(		
 		[Parameter(Mandatory)]
@@ -65,6 +66,7 @@ function Set-TargetResource
 ######################################################################################
 function Test-TargetResource
 {
+    [OutputType([bool])]
 	param
 	(		
 		[Parameter(Mandatory)]

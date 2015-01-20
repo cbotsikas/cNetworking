@@ -4,64 +4,16 @@ $DefaultDisplayGroup = "DSC_FirewallRule"
 # DSC uses the Get-TargetResource cmdlet to fetch the status of the resource instance specified in the parameters for the target machine
 function Get-TargetResource 
 {    
+    [OutputType([hashtable])]
     param 
     (        
         # Name of the Firewall Rule
         [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
         [String]$Name,
 
-        # Localized, user-facing name of the Firewall Rule being created        
-        [ValidateNotNullOrEmpty()]
-        [String]$DisplayName = $Name,
-        
-        # Name of the Firewall Group where we want to put the Firewall Rules
-        [ValidateNotNullOrEmpty()]
-        [String]$DisplayGroup = $DefaultDisplayGroup,
-
-        # Ensure the presence/absence of the resource
-        [ValidateSet("Present", "Absent")]
-        [String]$Ensure,
-
-        # Permit or Block the supplied configuration 
         [Parameter(Mandatory)]
         [ValidateSet("NotConfigured", "Allow", "Block")]
-        [String]$Access,
-
-        # Enable or disable the supplied configuration        
-        [ValidateSet("Enabled", "Disabled")]
-        [String]$State,
-
-        # Specifies one or more profiles to which the rule is assigned        
-        [ValidateSet("Any", "Public", "Private", "Domain")]
-        [String[]]$Profile,
-
-        # Direction of the connection        
-        [ValidateSet("Inbound", "Outbound")]
-        [String]$Direction,
-
-        # Specific Port used for filter. Specified by port number, range, or keyword        
-        [ValidateNotNullOrEmpty()]
-        [String[]]$RemotePort,
-
-        # Local Port used for the filter        
-        [ValidateNotNullOrEmpty()]
-        [String[]]$LocalPort,
-
-        # Specific Protocol for filter. Specified by name, number, or range        
-        [ValidateNotNullOrEmpty()]
-        [String]$Protocol,
-
-        # Documentation for the Rule       
-        [String]$Description,
-
-        # Path and file name of the program for which the rule is applied        
-        [ValidateNotNullOrEmpty()]
-        [String]$ApplicationPath,
-
-        # Specifies the short name of a Windows service to which the firewall rule applies        
-        [ValidateNotNullOrEmpty()]
-        [String]$Service
+        [string] $Access
     )
 
     # Hash table for Get
@@ -120,7 +72,6 @@ function Set-TargetResource
     (        
         # Name of the Firewall Rule
         [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
         [String]$Name,
 
         # Localized, user-facing name of the Firewall Rule being created        
@@ -145,7 +96,7 @@ function Set-TargetResource
         [String]$State = "Enabled",
 
         # Specifies one or more profiles to which the rule is assigned        
-        [ValidateSet("Any", "Public", "Private", "Domain")]
+        # [ValidateSet("Any", "Public", "Private", "Domain")]
         [String[]]$Profile = ("Any"),
 
         # Direction of the connection        
@@ -176,6 +127,8 @@ function Set-TargetResource
         [String]$Service
     )
     
+    ValidateProfileList $Profile
+
     Write-Verbose "SET: Find firewall rules with specified parameters for Name = $Name, DisplayGroup = $DisplayGroup"
     $firewallRules = Get-FirewallRules -Name $Name -DisplayGroup $DisplayGroup                                   
     
@@ -271,11 +224,11 @@ function Set-TargetResource
 # DSC uses Test-TargetResource cmdlet to check the status of the resource instance on the target machine
 function Test-TargetResource 
 { 
+    [OutputType([bool])]
     param 
     (        
         # Name of the Firewall Rule
         [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
         [String]$Name,
 
         # Localized, user-facing name of the Firewall Rule being created        
@@ -300,7 +253,6 @@ function Test-TargetResource
         [String]$State,
 
         # Specifies one or more profiles to which the rule is assigned        
-        [ValidateSet("Any", "Public", "Private", "Domain")]
         [String[]]$Profile,
 
         # Direction of the connection        
@@ -331,6 +283,8 @@ function Test-TargetResource
         [String]$Service
     )
     
+    ValidateProfileList $Profile
+
     Write-Verbose "TEST: Find rules with specified parameters"
     $firewallRules = Get-FirewallRules -Name $Name -DisplayGroup $DisplayGroup
     
@@ -386,6 +340,33 @@ function Test-TargetResource
 ######################
 ## Helper Functions ##
 ######################
+
+function ValidateProfileList
+{
+    param (
+        [string[]] $ProfileList
+    )
+
+    $validValues = 'Any', 'Public', 'Private', 'Domain'
+
+    $invalidValues = New-Object System.Collections.ArrayList
+
+    foreach ($string in $profileList)
+    {
+        if ($string -notin $validValues)
+        {
+            $null = $invalidValues.Add($string)
+        }
+    }
+
+    if ($invalidValues.Count -gt 0)
+    {
+        $invalid = ($invalidValues | Select-Object -Unique) -join ', '
+        $valid = $validValues -join ', '
+    }
+
+    throw "The -Profile parameter can only accept the following values: $valid.  The following invalid values were passed: $invalid."
+}
 
 # Function to Set a Firewall Rule based on specified parameters
 function Set-FirewallRule
