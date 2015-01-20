@@ -363,9 +363,9 @@ function ValidateProfileList
     {
         $invalid = ($invalidValues | Select-Object -Unique) -join ', '
         $valid = $validValues -join ', '
-    }
 
-    throw "The -Profile parameter can only accept the following values: $valid.  The following invalid values were passed: $invalid."
+        throw "The -Profile parameter can only accept the following values: $valid.  The following invalid values were passed: $invalid."
+    }
 }
 
 # Function to Set a Firewall Rule based on specified parameters
